@@ -6,13 +6,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from config.chrome_options import chrome_options 
+from config.logger import setup_logger
 
-logging.basicConfig(
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    level=logging.INFO,
-    datefmt="%Y-%m-%d %H:%M:%S"
-)
-logger = logging.getLogger()
+logger = setup_logger("EarningsScraper")
 
 def open_econ_calendar():
     """
@@ -129,21 +125,3 @@ def scrape_todays_econ():
 
     except Exception as e:
         logger.error(f"Error scraping economic events: {e}.")
-
-def main():
-    print("\n📢 Running Economic Calendar Scraper...\n")
-    econ_data = get_econ_based_on_day()
-
-    if econ_data:
-        print(f"✅ Retrieved {len(econ_data)} economic event records.\n")
-        for data in econ_data:
-            print(f"{data['Event Name']} | Forecast Estimate: {data['Forecast']} | Prior Result: {data['Prior']}")
-        return econ_data  
-
-    else:
-        print("❌ No economic data retrieved.")
-        return []
-
-
-if __name__ == "__main__":
-    main()
