@@ -8,6 +8,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from config.chrome_options import chrome_options 
+from config.chrome_options import chrome_options
 
 logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -115,8 +116,7 @@ def get_earnings_based_on_day():
     Determines which earnings to scrape
     based on the current day.
     """
-    #today = datetime.today().strftime('%A')
-    #today = "Sunday"
+    today = datetime.today().strftime('%A')
 
     if today == "Sunday":
         logger.info("Today is Sunday. Scraping this week's earnings.")
