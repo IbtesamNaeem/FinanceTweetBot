@@ -1,3 +1,4 @@
+import sys
 import time
 import logging
 from datetime import datetime
@@ -6,13 +7,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from config.chrome_options import chrome_options 
+from config.logger import setup_logger
 
-logging.basicConfig(
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    level=logging.INFO,
-    datefmt="%Y-%m-%d %H:%M:%S"
-)
-logger = logging.getLogger()
+logger = setup_logger("EarningsScraper")
 
 def open_earnings_calendar():
     """
@@ -62,7 +59,8 @@ def convert_market_cap_to_number(market_cap):
 def scrape_earnings_data(driver):
     """
     Extracts earnings data from
-    the TradingView earnings calendar.
+    the TradingView earnings calendar, including
+    whether the earnings report is before or after the bell.
     """
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.CLASS_NAME, "tv-data-table"))
@@ -87,7 +85,7 @@ def scrape_earnings_data(driver):
 
             # Convert Market Cap and apply filter
             market_cap_value = convert_market_cap_to_number(market_cap)
-            if market_cap_value <= 200_000_000_000: 
+            if market_cap_value <= 100_000_000_000: 
                 continue
 
             eps_estimate_element = row.find_element(By.CSS_SELECTOR, "[data-field-key='earnings_per_share_forecast_next_fq']")
@@ -96,11 +94,18 @@ def scrape_earnings_data(driver):
             revenue_forecast_element = row.find_element(By.CSS_SELECTOR, "[data-field-key='revenue_forecast_next_fq']")
             revenue_forecast = revenue_forecast_element.text.strip("USD") if revenue_forecast_element else "N/A"
 
+            try:
+                time_reporting_element = row.find_element(By.CSS_SELECTOR, "[data-field-key='earnings_release_next_time']")
+                time_reporting = time_reporting_element.get_attribute("title").strip() if time_reporting_element else "N/A"
+            except:
+                time_reporting = "N/A"
+
             earnings_data.append({
                 "Market Cap": market_cap,
                 "Ticker": ticker,
                 "EPS Estimate": eps_estimate,
-                "Revenue Forecast": revenue_forecast
+                "Revenue Forecast": revenue_forecast,
+                "Time": time_reporting
             })
 
         except Exception as e:
@@ -168,22 +173,3 @@ def scrape_todays_earnings():
 
     except Exception as e:
         logger.error(f"Error scraping earnings: {e}.")
-
-def main():
-    print("\n📢 Running Earnings Scraper...\n")
-    earnings_data = get_earnings_based_on_day()
-
-    if earnings_data:
-        print(f"✅ Retrieved {len(earnings_data)} earnings records.\n")
-        for data in earnings_data:
-            print(f"{data['Ticker']} | Market Cap: {data['Market Cap']} | EPS Estimate: {data['EPS Estimate']} | Revenue Forecast: {data['Revenue Forecast']}")
-        return earnings_data  # ✅ Ensure this is returned
-
-    else:
-        print("❌ No earnings data retrieved.")
-        return []  # ✅ Return an empty list instead of None
-
-
-if __name__ == "__main__":
-    main()
-    
