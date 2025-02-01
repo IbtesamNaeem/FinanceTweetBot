@@ -1,5 +1,3 @@
-import os
-import sys
 import time
 import logging
 from datetime import datetime
@@ -8,7 +6,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from config.chrome_options import chrome_options 
-from config.chrome_options import chrome_options
 
 logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -90,7 +87,7 @@ def scrape_earnings_data(driver):
 
             # Convert Market Cap and apply filter
             market_cap_value = convert_market_cap_to_number(market_cap)
-            if market_cap_value <= 100_000_000_000: 
+            if market_cap_value <= 200_000_000_000: 
                 continue
 
             eps_estimate_element = row.find_element(By.CSS_SELECTOR, "[data-field-key='earnings_per_share_forecast_next_fq']")
@@ -116,7 +113,8 @@ def get_earnings_based_on_day():
     Determines which earnings to scrape
     based on the current day.
     """
-    today = datetime.today().strftime('%A')
+    # today = datetime.today().strftime('%A')
+    today = "Sunday"
 
     if today == "Sunday":
         logger.info("Today is Sunday. Scraping this week's earnings.")
@@ -141,7 +139,7 @@ def upcoming_week_earnings():
             EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'itemContent-LeZwGiB6') and contains(text(), 'Next Week')]"))
         )
         week_button.click()
-        time.sleep(5)
+        time.sleep(2)
 
         WebDriverWait(driver, 30).until(
             EC.presence_of_element_located((By.CLASS_NAME, "tv-data-table"))
@@ -171,7 +169,7 @@ def scrape_todays_earnings():
     except Exception as e:
         logger.error(f"Error scraping earnings: {e}.")
 
-if __name__ == "__main__":
+def main():
     print("\n📢 Running Earnings Scraper...\n")
     earnings_data = get_earnings_based_on_day()
 
@@ -179,5 +177,13 @@ if __name__ == "__main__":
         print(f"✅ Retrieved {len(earnings_data)} earnings records.\n")
         for data in earnings_data:
             print(f"{data['Ticker']} | Market Cap: {data['Market Cap']} | EPS Estimate: {data['EPS Estimate']} | Revenue Forecast: {data['Revenue Forecast']}")
+        return earnings_data  # ✅ Ensure this is returned
+
     else:
         print("❌ No earnings data retrieved.")
+        return []  # ✅ Return an empty list instead of None
+
+
+if __name__ == "__main__":
+    main()
+    

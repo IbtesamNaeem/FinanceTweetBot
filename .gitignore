@@ -1,3 +1,5 @@
 twitter-bot-env/
-__pychache__
+__pycache__/
+*.pyc
+*.pyo
 .env
