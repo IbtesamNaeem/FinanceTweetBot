@@ -1,4 +1,3 @@
 twitter-bot-env/
 __pychache__
-
-
+.env
