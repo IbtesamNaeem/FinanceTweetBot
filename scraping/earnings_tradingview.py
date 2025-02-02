@@ -1,4 +1,6 @@
+import os
 import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import time
 import logging
 from datetime import datetime
@@ -8,8 +10,19 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from config.chrome_options import chrome_options 
 from config.logger import setup_logger
-
+import json
 logger = setup_logger("EarningsScraper")
+
+def load_index_tickers():
+    """
+    Loads S&P 500, NASDAQ-100, and QQQ tickers from indexes.json.
+    """
+    json_path = os.path.join(os.path.dirname(__file__), "indexes.json")
+    
+    with open(json_path, "r") as f:
+        indexes = json.load(f)
+
+    return indexes
 
 def convert_market_cap_to_number(market_cap):
     """
@@ -34,7 +47,7 @@ def convert_market_cap_to_number(market_cap):
             return float(market_cap)
     except ValueError:
         return 0
-    
+        
 def open_earnings_calendar():
     """
     Navigates to the Trading View
@@ -58,9 +71,9 @@ def open_earnings_calendar():
 
 def scrape_earnings_data(driver):
     """
-    Extracts earnings data from
-    the TradingView earnings calendar, including
-    whether the earnings report is before or after the bell.
+    Extracts earnings data from TradingView
+    and filters for companies in S&P 500 + other
+    important stocks
     """
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.CLASS_NAME, "tv-data-table"))
@@ -68,6 +81,9 @@ def scrape_earnings_data(driver):
 
     rows = driver.find_elements(By.CLASS_NAME, "tv-data-table__row")
     earnings_data = []
+
+    indexes = load_index_tickers()
+    tracked_tickers = set(indexes["sp500"])
 
     for row in rows:
         try:
@@ -77,6 +93,9 @@ def scrape_earnings_data(driver):
             ticker_full = ticker_element.text.strip()
             ticker_d = ticker_full.split("\n")[0]
             ticker = "".join(ticker_d[:-1])
+
+            if ticker not in tracked_tickers:
+                continue
 
             market_cap_element = WebDriverWait(row, 3).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, "[data-field-key='market_cap_basic']"))
@@ -173,3 +192,25 @@ def scrape_todays_earnings():
 
     except Exception as e:
         logger.error(f"Error scraping earnings: {e}.")
+
+def main():
+    """
+    Main function to execute the 
+    Earnings scraping process
+    """
+    logging.info("Initiating scraping process...")
+
+    earnings_data = get_earnings_based_on_day()
+
+    if not earnings_data:
+        logging.error("No earnings data retreived.")
+        return []
+    
+    logging.info(f"Sucessfully retreieved {len(earnings_data)} earnings.")
+    for data in earnings_data:
+        print(f"{data['Ticker']} | Market Cap: {data['Market Cap']} | EPS Estimate: {data['EPS Estimate']} | Revenue Forecast: {data['Revenue Forecast']}")
+    
+    return earnings_data
+
+if __name__ == "__main__":
+    main()
