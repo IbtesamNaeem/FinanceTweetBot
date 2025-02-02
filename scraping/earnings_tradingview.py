@@ -11,27 +11,6 @@ from config.logger import setup_logger
 
 logger = setup_logger("EarningsScraper")
 
-def open_earnings_calendar():
-    """
-    Navigates to the Trading View
-    Earnings calendar page.
-    """
-    try:
-        driver = chrome_options()
-        logger.info("Initializing WebDriver and opening earnings calendar page.")
-
-        driver.get("https://www.tradingview.com/markets/stocks-usa/earnings/")
-        WebDriverWait(driver, 30).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "tv-data-table"))
-        )
-
-        logger.info("Earnings calendar page loaded successfully.")
-        return driver
-
-    except Exception as e:
-        logger.error(f"Failed to open earnings calendar: {e}")
-        return None
-
 def convert_market_cap_to_number(market_cap):
     """
     Converts market cap strings like
@@ -55,6 +34,27 @@ def convert_market_cap_to_number(market_cap):
             return float(market_cap)
     except ValueError:
         return 0
+    
+def open_earnings_calendar():
+    """
+    Navigates to the Trading View
+    Earnings calendar page.
+    """
+    try:
+        driver = chrome_options()
+        logger.info("Initializing WebDriver and opening earnings calendar page.")
+
+        driver.get("https://www.tradingview.com/markets/stocks-usa/earnings/")
+        WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "tv-data-table"))
+        )
+
+        logger.info("Earnings calendar page loaded successfully.")
+        return driver
+
+    except Exception as e:
+        logger.error(f"Failed to open earnings calendar: {e}")
+        return None
 
 def scrape_earnings_data(driver):
     """
