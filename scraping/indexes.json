@@ -65,8 +65,7 @@
         "NIO", "XPEV", "IQV", "CRSP", "BNTX", "BAESY", "LHX", "TDG", "BYND", "TCEHY", "BIDU", "NTDOY", "SAP", "ASML", "DASH", "WIX", "RIVN", "LCID",
         "NIO", "XPEV", "FSR", "HOOD", "SQ", "SOFI", "BABA", "MELI", "TTWO", "EA",
         "ATVI", "NFLX", "DISCK", "CMCSA", "SHOP", "JD", "SE", "WMT", "COST", "CRSP",
-        "BNTX", "ILMN", "IQV", "VEEV", "TDOC", "BAESY", "LHX", "TDG"
-
-
+        "BNTX", "ILMN", "IQV", "VEEV", "TDOC", "BAESY", "LHX", "TDG", "TSM", "AVGO", "ASML",
+        "QCOM", "AMAT", "TXN", "LRCX", "ADI", "KLAC", "MU"
     ]
 }
