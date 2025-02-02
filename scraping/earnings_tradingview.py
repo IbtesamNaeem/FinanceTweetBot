@@ -104,7 +104,7 @@ def scrape_earnings_data(driver):
 
             # Convert Market Cap and apply filter
             market_cap_value = convert_market_cap_to_number(market_cap)
-            if market_cap_value <= 100_000_000_000: 
+            if market_cap_value <= 1_000_000_000: 
                 continue
 
             eps_estimate_element = row.find_element(By.CSS_SELECTOR, "[data-field-key='earnings_per_share_forecast_next_fq']")
@@ -137,8 +137,7 @@ def get_earnings_based_on_day():
     Determines which earnings to scrape
     based on the current day.
     """
-    # today = datetime.today().strftime('%A')
-    today = "Sunday"
+    today = datetime.today().strftime('%A')
 
     if today == "Sunday":
         logger.info("Today is Sunday. Scraping this week's earnings.")
@@ -149,8 +148,8 @@ def get_earnings_based_on_day():
 
 def upcoming_week_earnings():
     """
-    Clicks 'Next Week' filter to get 
-    earnings for the upcoming week.
+    Clicks 'Next Week' filter to get earnings for the upcoming week
+    and filters them based on the tickers in indexes.json.
     """
     driver = open_earnings_calendar()
     if not driver:
@@ -170,7 +169,17 @@ def upcoming_week_earnings():
         )
 
         logger.info("Successfully navigated to 'Next Week' earnings.")
-        return scrape_earnings_data(driver)
+
+        earnings_data = scrape_earnings_data(driver)
+
+        indexes = load_index_tickers()
+        tracked_tickers = set(indexes["sp500"])  
+
+        filtered_earnings = [data for data in earnings_data if data["Ticker"] in tracked_tickers]
+
+        logger.info(f"Filtered {len(filtered_earnings)} earnings reports from {len(earnings_data)} total.")
+
+        return filtered_earnings
 
     except Exception as e:
         logger.error(f"Failed to click 'Next Week' filter: {e}")
@@ -203,13 +212,28 @@ def main():
     earnings_data = get_earnings_based_on_day()
 
     if not earnings_data:
-        logging.error("No earnings data retreived.")
+        logging.error("❌ No earnings data retrieved.")
         return []
-    
-    logging.info(f"Sucessfully retreieved {len(earnings_data)} earnings.")
-    for data in earnings_data:
-        print(f"{data['Ticker']} | Market Cap: {data['Market Cap']} | EPS Estimate: {data['EPS Estimate']} | Revenue Forecast: {data['Revenue Forecast']}")
-    
+
+    pre_market_earnings = [data for data in earnings_data if "Before Open" in data["Time"]]
+    post_market_earnings = [data for data in earnings_data if "After Close" in data["Time"]]
+
+    if pre_market_earnings:
+        print(f"**Earnings Before the Bell** ({len(pre_market_earnings)} companies):\n")
+        for data in pre_market_earnings:
+            print(f" {data['Ticker']} | Market Cap: {data['Market Cap']}")
+            print(f"EPS Estimate: {data['EPS Estimate']} | Revenue Forecast: {data['Revenue Forecast']}")
+            print("-" * 40)
+
+    if post_market_earnings:
+        print(f"\n**Earnings After the Bell** ({len(post_market_earnings)} companies):\n")
+        for data in post_market_earnings:
+            print(f"{data['Ticker']} | Market Cap: {data['Market Cap']}")
+            print(f"EPS Estimate: {data['EPS Estimate']} | Revenue Forecast: {data['Revenue Forecast']}")
+            print("-" * 40)
+
+    logging.info(f"✅ Successfully retrieved {len(earnings_data)} earnings reports.")
+
     return earnings_data
 
 if __name__ == "__main__":
