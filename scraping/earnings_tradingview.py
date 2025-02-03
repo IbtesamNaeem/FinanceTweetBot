@@ -112,6 +112,20 @@ def scrape_earnings_data(driver):
 
             revenue_forecast_element = row.find_element(By.CSS_SELECTOR, "[data-field-key='revenue_forecast_next_fq']")
             revenue_forecast = revenue_forecast_element.text.strip("USD") if revenue_forecast_element else "N/A"
+            
+            try:
+                date_reporting_element = row.find_element(By.CSS_SELECTOR, '[data-field-key="earnings_release_next_date"]')
+                date_reporting = date_reporting_element.text.strip()
+
+                # Convert Date to Weekday (Inline)
+                if date_reporting:
+                    weekday_reporting = datetime.strptime(date_reporting, "%Y-%m-%d").strftime("%A")
+                else:
+                    weekday_reporting = "N/A"
+
+            except:
+                date_reporting = "N/A"
+                weekday_reporting = "N/A"
 
             try:
                 time_reporting_element = row.find_element(By.CSS_SELECTOR, "[data-field-key='earnings_release_next_time']")
@@ -124,6 +138,7 @@ def scrape_earnings_data(driver):
                 "Ticker": ticker,
                 "EPS Estimate": eps_estimate,
                 "Revenue Forecast": revenue_forecast,
+                "Date Reporting": weekday_reporting,
                 "Time": time_reporting
             })
 
@@ -223,6 +238,7 @@ def main():
         for data in pre_market_earnings:
             print(f" {data['Ticker']} | Market Cap: {data['Market Cap']}")
             print(f"EPS Estimate: {data['EPS Estimate']} | Revenue Forecast: {data['Revenue Forecast']}")
+            print(f"Date Reporting: {data['Date Reporting']}")
             print("-" * 40)
 
     if post_market_earnings:
@@ -230,6 +246,7 @@ def main():
         for data in post_market_earnings:
             print(f"{data['Ticker']} | Market Cap: {data['Market Cap']}")
             print(f"EPS Estimate: {data['EPS Estimate']} | Revenue Forecast: {data['Revenue Forecast']}")
+            print(f"Date Reporting: {data['Date Reporting']}")
             print("-" * 40)
 
     logging.info(f"✅ Successfully retrieved {len(earnings_data)} earnings reports.")
