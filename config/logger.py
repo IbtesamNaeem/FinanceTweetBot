@@ -1,6 +1,6 @@
 import logging
 
-def setup_logger(name=None, level=logging.INFO):
+def setup_logging(name=None, level=logging.INFO):
     """
     Sets up a reusable logger with consistent formatting.
 
