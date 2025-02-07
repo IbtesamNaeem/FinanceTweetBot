@@ -1,53 +1,38 @@
-import os
-import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-import time
-import logging
-from datetime import datetime
+import datetime
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from config.chrome_options import chrome_options 
-from config.logger import setup_logger
-import json
-logger = setup_logger("EarningsScraper")
+from config.logger import setup_logging
 
-def load_index_tickers():
-    """
-    Loads S&P 500, NASDAQ-100, and QQQ tickers from indexes.json.
-    """
-    json_path = os.path.join(os.path.dirname(__file__), "indexes.json")
-    
-    with open(json_path, "r") as f:
-        indexes = json.load(f)
+logging = setup_logging("EarningsScraper")
 
-    return indexes
-
-def convert_market_cap_to_number(market_cap):
+def earnings_to_be_tracked():
     """
-    Converts market cap strings like
-    '500M', '1.2B' into numbers.
+    Returns a dictionary mapping days
+    of the week to the stocks being tracked.
     """
-    if not market_cap or market_cap in ["—", "", None]:
-        return 0
+    return {
+        "Monday": ["SAIA", "TSN", "IDXX", "ARLP", "TWST", "JOUT", "LVRO", "NSSC", "KYO", "MRAAY",
+                   "PLTR", "KD", "CLX", "RBB", "DOC", "NXPI", "BBRR", "RMBS", "FN", "FLXS"],
+        "Tuesday": ["PYPL", "SPOT", "PFE", "REGN", "PEP", "MRK", "EL", "EPC", "APO",
+                    "AMD", "GOOGL", "SNAP", "CMG", "ENPH", "AMGN", "EA", "LUMN", "PRU", "JNPR"],
+        "Wednesday": ["UBER", "DIS", "NVO", "EQNR", "TM", "BSX", "JCI", "SWK", "ACB", "AFL",
+                      "F", "QCOM", "ARM", "SYM", "AMSC", "VKTX", "ORLY", "PI", "ALGN"],
+        "Thursday": ["LLY", "RBLX", "COP", "PTON", "HSY", "BMY",
+                     "AMZN", "ELF", "NET", "AFRM", "FTNT", "MCHP", "PINS", "BCE", "YUM"],
+        "Friday": ["CGC", "PAA", "FLO", "NWL", "AVTR", "FTV", "GRA", "BYRN", "CBOE", "KIM"]
+    }
 
-    market_cap = market_cap.strip("USD").replace(",", "")
-    
-    try:
-        if market_cap.endswith("K"):
-            return float(market_cap[:-1]) * 1_000
-        elif market_cap.endswith("M"):
-            return float(market_cap[:-1]) * 1_000_000
-        elif market_cap.endswith("B"):
-            return float(market_cap[:-1]) * 1_000_000_000
-        elif market_cap.endswith("T"):
-            return float(market_cap[:-1]) * 1_000_000_000_000
-        else:
-            return float(market_cap)
-    except ValueError:
-        return 0
-        
+def get_todays_stocks():
+    """
+    Returns the stock list for today's earnings
+    """
+    today = datetime.datetime.now().strftime("%A")
+    tracked_stocks = earnings_to_be_tracked().get(today, [])
+    return set(tracked_stocks)
+
 def open_earnings_calendar():
     """
     Navigates to the Trading View
@@ -55,25 +40,23 @@ def open_earnings_calendar():
     """
     try:
         driver = chrome_options()
-        logger.info("Initializing WebDriver and opening earnings calendar page.")
+        logging.info("Initializing WebDriver and opening earnings calendar page.")
 
         driver.get("https://www.tradingview.com/markets/stocks-usa/earnings/")
         WebDriverWait(driver, 30).until(
             EC.presence_of_element_located((By.CLASS_NAME, "tv-data-table"))
         )
 
-        logger.info("Earnings calendar page loaded successfully.")
+        logging.info("Earnings calendar page loaded successfully.")
         return driver
 
     except Exception as e:
-        logger.error(f"Failed to open earnings calendar: {e}")
+        logging.error(f"Failed to open earnings calendar: {e}")
         return None
 
 def scrape_earnings_data(driver):
     """
-    Extracts earnings data from TradingView
-    and filters for companies in S&P 500 + other
-    important stocks
+    Extracts earnings data from TradingView and filters for today's tracked stocks.
     """
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.CLASS_NAME, "tv-data-table"))
@@ -82,8 +65,7 @@ def scrape_earnings_data(driver):
     rows = driver.find_elements(By.CLASS_NAME, "tv-data-table__row")
     earnings_data = []
 
-    indexes = load_index_tickers()
-    tracked_tickers = set(indexes["sp500"])
+    tracked_stocks = get_todays_stocks()
 
     for row in rows:
         try:
@@ -94,112 +76,31 @@ def scrape_earnings_data(driver):
             ticker_d = ticker_full.split("\n")[0]
             ticker = "".join(ticker_d[:-1])
 
-            if ticker not in tracked_tickers:
-                continue
+            if ticker in tracked_stocks:
+                eps_estimate_element = row.find_element(By.CSS_SELECTOR, "[data-field-key='earnings_per_share_forecast_next_fq']")
+                eps_estimate = eps_estimate_element.text.strip("USD") if eps_estimate_element else "N/A"
 
-            market_cap_element = WebDriverWait(row, 3).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "[data-field-key='market_cap_basic']"))
-            )
-            market_cap = market_cap_element.text.strip("USD")
+                revenue_forecast_element = row.find_element(By.CSS_SELECTOR, "[data-field-key='revenue_forecast_next_fq']")
+                revenue_forecast = revenue_forecast_element.text.strip("USD") if revenue_forecast_element else "N/A"
+                
+                try:
+                    time_reporting_element = row.find_element(By.CSS_SELECTOR, "[data-field-key='earnings_release_next_time']")
+                    time_reporting = time_reporting_element.get_attribute("title").strip() if time_reporting_element else "N/A"
+                except:
+                    time_reporting = "N/A"
 
-            # Convert Market Cap and apply filter
-            market_cap_value = convert_market_cap_to_number(market_cap)
-            if market_cap_value <= 1_000_000_000: 
-                continue
-
-            eps_estimate_element = row.find_element(By.CSS_SELECTOR, "[data-field-key='earnings_per_share_forecast_next_fq']")
-            eps_estimate = eps_estimate_element.text.strip("USD") if eps_estimate_element else "N/A"
-
-            revenue_forecast_element = row.find_element(By.CSS_SELECTOR, "[data-field-key='revenue_forecast_next_fq']")
-            revenue_forecast = revenue_forecast_element.text.strip("USD") if revenue_forecast_element else "N/A"
-            
-            try:
-                date_reporting_element = row.find_element(By.CSS_SELECTOR, '[data-field-key="earnings_release_next_date"]')
-                date_reporting = date_reporting_element.text.strip()
-
-                # Convert Date to Weekday (Inline)
-                if date_reporting:
-                    weekday_reporting = datetime.strptime(date_reporting, "%Y-%m-%d").strftime("%A")
-                else:
-                    weekday_reporting = "N/A"
-
-            except:
-                date_reporting = "N/A"
-                weekday_reporting = "N/A"
-
-            try:
-                time_reporting_element = row.find_element(By.CSS_SELECTOR, "[data-field-key='earnings_release_next_time']")
-                time_reporting = time_reporting_element.get_attribute("title").strip() if time_reporting_element else "N/A"
-            except:
-                time_reporting = "N/A"
-
-            earnings_data.append({
-                "Market Cap": market_cap,
-                "Ticker": ticker,
-                "EPS Estimate": eps_estimate,
-                "Revenue Forecast": revenue_forecast,
-                "Date Reporting": weekday_reporting,
-                "Time": time_reporting
-            })
+                earnings_data.append({
+                    "Ticker": ticker,
+                    "EPS Estimate": eps_estimate,
+                    "Revenue Forecast": revenue_forecast,
+                    "Time": time_reporting
+                })
 
         except Exception as e:
-            logger.error(f"Error processing row: {e}")
+            logging.error(f"Error processing row: {e}")
 
     return earnings_data
 
-def get_earnings_based_on_day():
-    """
-    Determines which earnings to scrape
-    based on the current day.
-    """
-    today = datetime.today().strftime('%A')
-
-    if today == "Sunday":
-        logger.info("Today is Sunday. Scraping this week's earnings.")
-        return upcoming_week_earnings()
-    else:
-        logger.info(f"Today is {today}. Scraping today's earnings.")
-        return scrape_todays_earnings()
-
-def upcoming_week_earnings():
-    """
-    Clicks 'Next Week' filter to get earnings for the upcoming week
-    and filters them based on the tickers in indexes.json.
-    """
-    driver = open_earnings_calendar()
-    if not driver:
-        logger.error("WebDriver initialization failed.")
-        return []
-    
-    try:
-        logger.info("Clicking 'Next Week' filter...")
-        week_button = WebDriverWait(driver, 30).until(
-            EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'itemContent-LeZwGiB6') and contains(text(), 'Next Week')]"))
-        )
-        week_button.click()
-        time.sleep(2)
-
-        WebDriverWait(driver, 30).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "tv-data-table"))
-        )
-
-        logger.info("Successfully navigated to 'Next Week' earnings.")
-
-        earnings_data = scrape_earnings_data(driver)
-
-        indexes = load_index_tickers()
-        tracked_tickers = set(indexes["sp500"])  
-
-        filtered_earnings = [data for data in earnings_data if data["Ticker"] in tracked_tickers]
-
-        logger.info(f"Filtered {len(filtered_earnings)} earnings reports from {len(earnings_data)} total.")
-
-        return filtered_earnings
-
-    except Exception as e:
-        logger.error(f"Failed to click 'Next Week' filter: {e}")
-        return []
-    
 def scrape_todays_earnings():
     """
     Scrapes today's earnings
@@ -207,51 +108,12 @@ def scrape_todays_earnings():
     """
     driver = open_earnings_calendar()
     if not driver:
-        logger.error("WebDriver initialization failed.")
+        logging.error("WebDriver initialization failed.")
         return []
 
     try:
-        time.sleep(3)
         return scrape_earnings_data(driver)
 
     except Exception as e:
-        logger.error(f"Error scraping earnings: {e}.")
-
-def main():
-    """
-    Main function to execute the 
-    Earnings scraping process
-    """
-    logging.info("Initiating scraping process...")
-
-    earnings_data = get_earnings_based_on_day()
-
-    if not earnings_data:
-        logging.error("❌ No earnings data retrieved.")
-        return []
-
-    pre_market_earnings = [data for data in earnings_data if "Before Open" in data["Time"]]
-    post_market_earnings = [data for data in earnings_data if "After Close" in data["Time"]]
-
-    if pre_market_earnings:
-        print(f"**Earnings Before the Bell** ({len(pre_market_earnings)} companies):\n")
-        for data in pre_market_earnings:
-            print(f" {data['Ticker']} | Market Cap: {data['Market Cap']}")
-            print(f"EPS Estimate: {data['EPS Estimate']} | Revenue Forecast: {data['Revenue Forecast']}")
-            print(f"Date Reporting: {data['Date Reporting']}")
-            print("-" * 40)
-
-    if post_market_earnings:
-        print(f"\n**Earnings After the Bell** ({len(post_market_earnings)} companies):\n")
-        for data in post_market_earnings:
-            print(f"{data['Ticker']} | Market Cap: {data['Market Cap']}")
-            print(f"EPS Estimate: {data['EPS Estimate']} | Revenue Forecast: {data['Revenue Forecast']}")
-            print(f"Date Reporting: {data['Date Reporting']}")
-            print("-" * 40)
-
-    logging.info(f"✅ Successfully retrieved {len(earnings_data)} earnings reports.")
-
-    return earnings_data
-
-if __name__ == "__main__":
-    main()
+        logging.error(f"Error scraping earnings: {e}.")
+        
