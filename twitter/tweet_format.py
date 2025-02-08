@@ -5,101 +5,54 @@ def weekly_earnings_tweet():
     Exceutes the weekly earnings tweet (Sunday 8pm)
     """
 
-def daily_premkt_earnings_tweet():
+def daily_premkt_earnings_tweet(earnings_list):
     """
-    Exceutes the daily earnings reminder 
-    tweet (8pm day prior)
+    Formats the earnings reminder tweet (before market open).
     """
+    tweet = "📢 Major companies reporting earnings today after the bell:\n\n"
+
+    for stock in earnings_list:
+        tweet += f"- ${stock['Ticker']} --->\n"
+        tweet += f"  📊 EPS estimate: {stock['EPS Estimate']}\n"
+        tweet += f"  💰 Revenue estimate: {stock['Revenue Estimate']}\n\n"
+
+    return tweet.strip()
+
+def daily_afterhrs_earnings_tweet(stock):
+    """
+    Formats the earnings results tweet after the report.
+    """
+    tweet = f"🚨 ${stock['Ticker']} has just reported its quarterly earnings:\n\n"
+
+    tweet += f"📊 EPS Estimate ---> {stock['EPS Estimate']}\n"
+    tweet += f"📈 EPS Actual ---> {stock['EPS Reported']} {get_beat_miss(stock['EPS Estimate'], stock['EPS Reported'])}\n\n"
+
+    tweet += f"💰 Revenue Estimate ---> {stock['Revenue Estimate']}\n"
+    tweet += f"💵 Revenue Actual ---> {stock['Revenue Reported']} {get_beat_miss(stock['Revenue Estimate'], stock['Revenue Reported'])}\n"
+
+    return tweet.strip()
+
+def get_beat_miss(estimate, reported):
+    """
+    Determines if the reported value is a BEAT, MISS, or inline
+    with the analyst consensus.
+    """
+    try:
+        estimate = float(estimate.replace("$", "").replace("B", "").replace("M", ""))
+        reported = float(reported.replace("$", "").replace("B", "").replace("M", ""))
+
+        if reported > estimate:
+            return "✅ BEAT"
+        elif reported < estimate:
+            return "❌ MISS"
+        else:
+            return "🔹 Inline"
+    except:
+        return ""
     
+def send_tweet(tweet):
+    """
+    Sends the tweet.
+    """
+    print(tweet) 
 
-def daily_afterhr_earnings_tweet():
-    """
-    Exceutes the daily earnings after the 
-    bell reminder tweet
-    """
-    tweet = f"""
-    ${ticker} has just reported its quarterly earnings:
-
-    EPS Estimate ---> {eps_est}
-    EPS Actual ---> {eps_actual} {mark}
-
-    Revenue Estimate --> {rev_est}
-    Revenue Actual --> {rev_actual} {mark}
-
-    Profit Estimate --> {prof_est}
-    Profit Actual --> {prof_actual} {mark}
-
-    Guidance for the next quarter:
-    Revenue expected at {revenue_outlook} ({outlook_mark})
-    """
-
-def reaction_to_result():
-    """
-    Executes the reaction to 
-    earnings tweet
-    """
-    tweet = f"""
-    ${ticker} stock has dropped {price_reaction} in reaction to the news.
-    Current price: {current_price} (as of this tweet).
-    """ 
-
-def high_tweet():
-    """
-    Executes the 52-week-high tweet
-    """
-    tweet = f"""
-    At some point today, all these stocks hit a new 52-week high:
-    - ${stock}
-    """
-
-def low_tweet():
-    """
-    Executes the 52-week-low tweet
-    """
-    tweet = f"""
-    At some point today, all these stocks hit a new 52-week low:
-    - ${stock}
-    """
-
-def weekly_econ_event_tweet():
-    """
-    Executes the weekly econ reminder tweet
-    """
-    tweet = f"""
-    Major economic events this week:
-    - {event} ---> Estimate: {econ_est}, Prior: {econ_prior}
-    """
-
-def daily_econ_tweet():
-    """
-    Executes the daily economic reminder tweet
-    (7:30 AM)
-    """
-    tweet = f"""
-    Major economic evenents today:
-    - {event} ---> Estimate: {econ_est}, Prior: {econ_prior}.
-    """
-
-def futures_tweet():
-    """
-    Executes the daily futures update tweet
-    (Sunday at 6pm)
-    """
-    tweet = f"""
-    Stock futures are back! We are getting closer to the market being open
-    - S&P 500 Futures: {s%p_es}
-    - Nasdaq 100 Futures: {nasdaq_nq}
-    - DJI Futures: {dji_ym}
-    - Russel 2000 Futures: {russel_rty}
-    """
-
-def halt_tweet():
-    """
-    Executes the trading halt tweet LUDP and T1
-    """
-    if reason == "LUDP":
-        tweet = f"{stock} HAS BEEN HALTED - LAST AT {price}
-    elif reason == "T1":
-        tweet = f""
-    tweet = f"{stock} HAS BEEN HALTED DUE TO NEWS PENDING"
-    return tweet
