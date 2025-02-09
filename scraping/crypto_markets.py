@@ -30,17 +30,23 @@ def get_btc_price():
         "include_24hr_change": "true"
     }
     
-    response = requests.get(url, params=params)
-    
-    if response.status_code == 200:
-        data = response.json().get("bitcoin", {})
-        btc_price = data.get("usd", "N/A")
-        btc_change_24h = data.get("usd_24h_change", "N/A")
+    try:
+        response = requests.get(url, params=params)
+        
+        if response.status_code == 200:
+            data = response.json().get("bitcoin", {})
+            btc_price = data.get("usd", "N/A")
+            btc_change_24h = data.get("usd_24h_change", "N/A")
 
-        return btc_price, btc_change_24h
-    else:
-        logging.error(f"Error fetching BTC data: {response.status_code}")
+            return btc_price, btc_change_24h
+        else:
+            logging.error(f"Error fetching BTC data: {response.status_code}")
+            return None, None
+        
+    except Exception as e:
+        logging.error(f"Error fetchign BTC price: {e}")
         return None, None
+    
 
 def crypto_markets():
     """
