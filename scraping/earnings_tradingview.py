@@ -3,10 +3,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from config.chrome_options import chrome_options
+from config.chrome_options import chrome_options 
 from config.logger import setup_logging
-from scraping.edgar_scraper import get_latest_earnings
-from twitter.tweet_format import daily_premkt_earnings_tweet, daily_afterhr_earnings_tweet, send_tweet
 
 logging = setup_logging("EarningsScraper")
 
@@ -16,11 +14,15 @@ def earnings_to_be_tracked():
     of the week to the stocks being tracked.
     """
     return {
-        "Monday": ["AAPL", "TSN", "PLTR", "KD"],
-        "Tuesday": ["PYPL", "AMD", "GOOGL", "SNAP"],
-        "Wednesday": ["UBER", "DIS", "QCOM", "F"],
-        "Thursday": ["LLY", "RBLX", "COP", "AMZN"],
-        "Friday": ["CGC", "PAA", "FLO", "NWL"]
+        "Monday": ["MCD", "MNDY", "ON", "TSEM", "INCY", "ROK", "GCMG", "ALX", "NSP", "CNA",
+                   "ALAB", "FLNC", "VRTIX", "ACLS", "MEDP", "AMKR", "LSCC", "MITK", "INSP", "AWR"],
+        "Tuesday": ["SHOP", "KO", "HUM", "BP", "LDOS", "AN", "SPGI", "CG", "MAR",
+                    "SMCI", "SUPMERC", "UPST", "DASH", "LYFT", "FRSH", "FWKS", "ET", "GLD", "GILD", "CFLT"],
+        "Wednesday": ["VRT", "CVS", "ABNB", "BMO", "JLL", "BIDU", "WDAY", "ADBE", "DUOL", "YETI",
+                      "RBLX", "ROKU", "AFRM", "PINS", "CSCO", "MGM", "ASPN", "GEHC"],
+        "Thursday": ["DDOG", "COIN", "CYBR", "DE", "CROX", "DUK", "PGY", "SONY",
+                     "PG&E", "HWM", "HECLA", "RSG", "TWLO", "DKNG", "AMAT", "ABNB", "PANW", "WYN"],
+        "Friday": ["MRNA", "ENB", "AXL", "AMC", "MGA", "POR", "FTS", "ACDVF", "SXT", "SXT", "ESNT"]
     }
 
 def get_todays_stocks():
@@ -28,7 +30,8 @@ def get_todays_stocks():
     Returns the stock list for today's earnings
     """
     today = datetime.datetime.now().strftime("%A")
-    return set(earnings_to_be_tracked().get(today, []))
+    tracked_stocks = earnings_to_be_tracked().get(today, [])
+    return set(tracked_stocks)
 
 def open_earnings_calendar():
     """
@@ -37,14 +40,14 @@ def open_earnings_calendar():
     """
     try:
         driver = chrome_options()
-        logging.info("Opening TradingView earnings calendar.")
+        logging.info("Initializing WebDriver and opening earnings calendar page.")
 
         driver.get("https://www.tradingview.com/markets/stocks-usa/earnings/")
         WebDriverWait(driver, 30).until(
             EC.presence_of_element_located((By.CLASS_NAME, "tv-data-table"))
         )
 
-        logging.info("Earnings calendar loaded successfully.")
+        logging.info("Earnings calendar page loaded successfully.")
         return driver
 
     except Exception as e:
@@ -61,25 +64,36 @@ def scrape_earnings_data(driver):
 
     rows = driver.find_elements(By.CLASS_NAME, "tv-data-table__row")
     earnings_data = []
+
     tracked_stocks = get_todays_stocks()
 
     for row in rows:
         try:
-            ticker_element = row.find_element(By.CSS_SELECTOR, "[data-field-key='name']")
+            ticker_element = WebDriverWait(row, 3).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "[data-field-key='name']"))
+            )
             ticker_full = ticker_element.text.strip()
-            ticker = ticker_full.split("\n")[0].strip()
+            ticker_d = ticker_full.split("\n")[0]
+            ticker = "".join(ticker_d[:-1])
 
             if ticker in tracked_stocks:
                 eps_estimate_element = row.find_element(By.CSS_SELECTOR, "[data-field-key='earnings_per_share_forecast_next_fq']")
-                eps_estimate = eps_estimate_element.text.strip() if eps_estimate_element else "N/A"
+                eps_estimate = eps_estimate_element.text.strip("USD") if eps_estimate_element else "N/A"
 
                 revenue_forecast_element = row.find_element(By.CSS_SELECTOR, "[data-field-key='revenue_forecast_next_fq']")
-                revenue_forecast = revenue_forecast_element.text.strip() if revenue_forecast_element else "N/A"
+                revenue_forecast = revenue_forecast_element.text.strip("USD") if revenue_forecast_element else "N/A"
+                
+                try:
+                    time_reporting_element = row.find_element(By.CSS_SELECTOR, "[data-field-key='earnings_release_next_time']")
+                    time_reporting = time_reporting_element.get_attribute("title").strip() if time_reporting_element else "N/A"
+                except:
+                    time_reporting = "N/A"
 
                 earnings_data.append({
                     "Ticker": ticker,
                     "EPS Estimate": eps_estimate,
-                    "Revenue Estimate": revenue_forecast
+                    "Revenue Forecast": revenue_forecast,
+                    "Time": time_reporting
                 })
 
         except Exception as e:
@@ -87,37 +101,18 @@ def scrape_earnings_data(driver):
 
     return earnings_data
 
-def post_earnings_reminder():
+def scrape_todays_earnings():
     """
-    Posts an earnings reminder tweet before 
-    the companies report.
+    Scrapes today's earnings
+    from TradingView.
     """
     driver = open_earnings_calendar()
     if not driver:
         logging.error("WebDriver initialization failed.")
-        return
+        return []
 
     try:
-        earnings_estimates = scrape_earnings_data(driver)
-        driver.quit()
-
-        if earnings_estimates:
-            for stock in earnings_estimates:
-                send_tweet(daily_premkt_earnings_tweet(stock))
-            logging.info("Tweeted earnings reminder.")
+        return scrape_earnings_data(driver)
 
     except Exception as e:
-        logging.error(f"Error scraping earnings estimates: {e}")
-
-def post_earnings_results():
-    """
-    Fetches reported earnings from EDGAR
-    and posts the final results.
-    """
-    tracked_stocks = get_todays_stocks()
-
-    for ticker in tracked_stocks:
-        earnings_data = get_latest_earnings(ticker)
-        if earnings_data:
-            send_tweet(daily_afterhr_earnings_tweet(earnings_data))
-            logging.info(f"Tweeted earnings results for {ticker}.")
+        logging.error(f"Error scraping earnings: {e}.")
