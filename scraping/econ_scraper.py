@@ -4,125 +4,121 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from config.chrome_options import chrome_options 
+from config.chrome_options import chrome_options
 from config.logger import setup_logging
 
 logging = setup_logging("EconScraper")
 
-def open_econ_calendar():
+def open_earnings_calendar():
     """
-    Navigates to the Trading Economics
-    Economics calendar page.
+    Navigates to the Trading Views
+    USDCAD Economic Calendar page.
     """
     try:
         driver = chrome_options()
-        logging.info("Initializing WebDriver and opening earnings calendar page.")
+        driver.set_window_size(1920, 1080)
 
-        driver.get("https://tradingeconomics.com/united-states/calendar")
-        filter_button = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.CLASS_NAME, "d-none.d-lg-inline"))
+        logging.info("Initializing WebDriver and opening economic calendar page.")
+
+        driver.get("https://www.tradingview.com/symbols/USDCAD/economic-calendar/?exchange=FX_IDC")
+        WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located((By.XPATH, "//div[contains(@data-name, 'economic-calendar-item')]"))
         )
 
-        logging.info("Earnings calendar page loaded successfully.")
+        logging.info("Economic calendar page loaded successfully.")
         return driver
 
     except Exception as e:
-        logging.error(f"Failed to open earnings calendar: {e}")
+        logging.error(f"Failed to open economic calendar: {e}")
         return None
-    
 
-def select_option(driver):
+def click_importance(driver):
     """
-    Selects the "Impact" button and then clicks the
-    three-star (level 3) importance checkbox. 
+    Clicks the Importance filter button
+    to filter out
     """
     try:
-        logging.info("Finding and clicking the Impact button.")
+        logging.info("Finding the High Importance button.")
 
-        impact_button = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH, '//*[@id="ctl00_ContentPlaceHolder1_ctl00_Button1"]/span'))
-        )
-        
-        driver.execute_script("arguments[0].click();", impact_button)
-        logging.info("Impact button clicked successfully.")
-
-    except Exception as e:
-        logging.error(f"Failed to click on Impact button: {e}")
-
-    try:
-        logging.info("Finding and clicking the level 3 importance checkbox.")
-
-        level_3_button = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, '//*[@id="aspnetForm"]/div[3]/div/div[1]/table/tbody/tr/td[1]/div/div[2]/ul/li[3]/a/input'))
+        importance_button = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, '//*[@id="js-category-content"]/div[2]/div/section/div/div[2]/div/div/div/div[1]/div[1]/button/span[2]/span[1]'))
         )
 
-        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", level_3_button)
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", importance_button)
         time.sleep(2)
-
-        try:
-            level_3_button.click()
-            logging.info("Level 3 importance checkbox clicked successfully (normal click).")
-        except Exception as click_error:
-            logging.warning(f"Normal click failed: {click_error}. Using JavaScript click.")
-
-            driver.execute_script("arguments[0].click();", level_3_button)
-            logging.info("Level 3 importance checkbox clicked successfully (JS click).")
+        
+        driver.execute_script("arguments[0].click();", importance_button)
+        
+        logging.info("Importance button clicked successfully.")
 
     except Exception as e:
-        logging.error(f"Failed to press level 3 importance option: {e}.")
+        logging.error(f"Failed to click Importance button: {e}")
 
-
-def scrape_econ_data(driver):
+def scrape_economicss_data(driver):
     """
-    Extracts economic events from Trading Economics:
+    Extracts the Economic Event data 
+    from Trading View
     """
-    logging.info("Waiting for the economic calendar to load...")
+    logging.info("Waiting for the economic calendar to load.")
 
-    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-    time.sleep(3)
+    WebDriverWait(driver, 20).until(
+        EC.presence_of_element_located((By.XPATH, "//div[contains(@data-name, 'economic-calendar-item')]"))
+    )
 
-    try:
-        WebDriverWait(driver, 30).until(
-            EC.presence_of_element_located((By.XPATH, "//tr[@data-event]"))
-        )
-
-    except Exception:
-        logging.error("Economic events did not load.")
-        return []
-
-    rows = driver.find_elements(By.XPATH, "//tr[@data-event]")
+    rows = driver.find_elements(By.XPATH, "//div[contains(@data-name, 'economic-calendar-item')]")
 
     if not rows:
-        logging.warning("No economic events found.")
+        logging.error("No economic calendar rows found.")
         return []
+
+    logging.info(f"Found {len(rows)} economic event rows.")
 
     econ_data = []
 
-    for row in rows:
+    for index, row in enumerate(rows):
+        logging.info(f"Processing row {index + 1}...")
+
         try:
-            event_name = row.get_attribute("data-event").strip()
+            event_element = row.find_element(By.XPATH, ".//span[contains(@class, 'titleText')]")
+            event_name = event_element.text.strip()
+        except Exception as e:
+            event_name = "N/A"
+            logging.error(f"Error extracting event name in row {index + 1}: {e}")
 
-            try:
-                previous_element = row.find_element(By.XPATH, ".//td[contains(@class, 'calendar-item') and contains(@class, 'calendar-item-positive')]")
-                previous_value = previous_element.text.strip() if previous_element.text else "N/A"
-            except:
-                previous_value = "N/A"
+        logging.info(f"Event: {event_name}")
 
-            try:
-                forecast_element = row.find_element(By.XPATH, ".//td[contains(@class, 'calendar-item') and contains(@class, 'calendar-item-forecast')]")
-                forecast_value = forecast_element.text.strip() if forecast_element.text else "N/A"
-            except:
-                forecast_value = "N/A"
+        try:
+            forecast_elements = row.find_elements(By.XPATH, ".//span[contains(@class, 'value')]")
+            forecast_value = forecast_elements[0].text.strip() if len(forecast_elements) > 0 else "N/A"
+            
+            prior_elements = row.find_elements(By.XPATH, "")
+            prior_value = forecast_elements[1].text.strip() if len(forecast_elements) > 1 else "N/A"
 
-            logging.info(f"✅ Extracted: {event_name} | Previous: {previous_value} | Forecast: {forecast_value}")
-
-            econ_data.append({
-                "Event Name": event_name,
-                "Previous Value": previous_value,
-                "Forecast Value": forecast_value
-            })
+            forecast_value = forecast_value.replace("%", "").strip()
+            prior_value = prior_value.replace("%", "").strip()
 
         except Exception as e:
-            logging.error(f"Error processing row: {e}")
+            forecast_value = "N/A"
+            prior_value = "N/A"
+            logging.error(f"Error extracting forecast/prior in row {index + 1}: {e}")
+
+        logging.info(f"Forecast: {forecast_value} | Prior: {prior_value}")
+
+        try:
+            date_element = row.find_elements(By.XPATH, ".//span[contains(@class, 'economic-calendar-item-time')]")
+            event_date = date_element[0].text.strip() if date_element else "N/A"
+
+        except Exception as e:
+            event_date = "N/A"
+            logging.error(f"Error extracting date in row {index + 1}: {e}")
+
+        logging.info(f"Date: {event_date}")
+
+        econ_data.append({
+            "Event": event_name,
+            "Forecast": forecast_value,
+            "Prior": prior_value,
+            "Date": event_date
+        })
 
     return econ_data

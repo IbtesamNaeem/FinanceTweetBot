@@ -56,7 +56,8 @@ def open_earnings_calendar():
 
 def scrape_earnings_data(driver):
     """
-    Extracts earnings data from TradingView and filters for today's tracked stocks.
+    Extracts earnings data from TradingView and filters
+    for today's tracked stocks.
     """
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.CLASS_NAME, "tv-data-table"))
