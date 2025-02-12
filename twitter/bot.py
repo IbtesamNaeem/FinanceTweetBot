@@ -2,10 +2,18 @@ import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+import time
 import tweepy
 from dotenv import load_dotenv
-from twitter.tweet_format import daily_premkt_earnings_tweet, daily_afterhrs_earnings_tweet
-from scraping.earnings_tradingview import scrape_todays_earnings
+
+from twitter.tweet_format import (
+    daily_premkt_earnings_tweet, 
+    daily_afterhrs_earnings_tweet,
+    econ_reminder_tomorrow,
+    econ_reminder_weekly
+)
+from scraping.earnings_tradingview import scrape_todays_earnings  # Corrected import
+from scraping.econ_scraper import open_earnings_calendar, click_importance, day, scrape_economics_data
 from config.logger import setup_logging
 
 logging = setup_logging("TwitterBot")
@@ -28,41 +36,74 @@ client = tweepy.Client(
 
 def post_pre_market_earnings_tweet():
     """
-    Fetches earnings data, formats the Pre-Market tweet, and posts it on X.
+    Fetches earnings data and formats
+    the Pre-Market tweet, and prints it.
     """
     earnings_data = scrape_todays_earnings()
 
-    post_market_earnings = [e for e in earnings_data if e['Time'] == "Before Open"]
+    pre_market_earnings = [e for e in earnings_data if e['Time'] == "Before Open"]
 
-    post_market_tweet = daily_afterhrs_earnings_tweet(post_market_earnings)
-
-    if post_market_tweet:
-        try:
-            response = client.create_tweet(text=post_market_tweet)  
-            logging.info("Pre-Market earnings tweet posted!", response)
-        except tweepy.TweepError as e:
-            logging.critical(f"Twitter API error: {e}")
+    if pre_market_earnings:
+        daily_premkt_earnings_tweet(pre_market_earnings)
     else:
-        logging.error("No Pre-Market earnings available to tweet.")
-    
+        print("No Pre-Market earnings available.")
+
 def post_after_hours_earnings_tweet():
     """
-    Fetches earnings data, formats the After-Hours tweet, and posts it on X.
+    Fetches earnings data and formats 
+    the After-Hours tweet, and prints it.
     """
     earnings_data = scrape_todays_earnings()
 
-    post_market_earnings = [e for e in earnings_data if e['Time'] == "After Close"]
+    after_hours_earnings = [e for e in earnings_data if e['Time'] == "After Close"]
 
-    post_market_tweet = daily_afterhrs_earnings_tweet(post_market_earnings)
-
-    if post_market_tweet:
-        try:
-            response = client.create_tweet(text=post_market_tweet)
-            logging.info("After-Hours earnings tweet posted!", response)
-        except tweepy.TweepError as e:
-            logging.critical(f"Twitter API error: {e}")
+    if after_hours_earnings: 
+        daily_afterhrs_earnings_tweet(after_hours_earnings)
     else:
-        logging.error("❌ No After-Hours earnings available to tweet.")
+        print("No After-Hours earnings available.")
+
+def post_daily_econ_tweet():
+    """
+    Fetches economic data for tomorrow and 
+    prints the formatted tweet.
+    """
+    driver = open_earnings_calendar()
+
+    if driver:
+        click_importance(driver)
+        day(driver, "Tomorrow")
+        time.sleep(1)
+        econ_data_tomorrow = scrape_economics_data(driver)
+
+        print("\n📊 Economic Events for Tomorrow:")
+        econ_reminder_tomorrow(econ_data_tomorrow)
+
+        driver.quit()
+
+def post_weekly_econ_tweet():
+    """
+    Fetches economic data for this week and
+    prints the formatted tweet.
+    """
+    driver = open_earnings_calendar()
+
+    if driver:
+        click_importance(driver)
+        day(driver, "This Week")
+        time.sleep(1)
+        econ_data_week = scrape_economics_data(driver)
+
+        print("\n📈 Economic Events for This Week:")
+        econ_reminder_weekly(econ_data_week)
+
+        driver.quit()
+
 
 if __name__ == "__main__":
+    print("\n🚀 Running Economic & Earnings Tweet Simulation...\n")
+
+    post_daily_econ_tweet()
+    post_weekly_econ_tweet()
+
     post_pre_market_earnings_tweet()
+    post_after_hours_earnings_tweet()

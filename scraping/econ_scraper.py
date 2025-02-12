@@ -7,7 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from config.chrome_options import chrome_options
 from config.logger import setup_logging
 
-logging = setup_logging("EconScraper")
+logging  = setup_logging("EconScraper")
 
 def open_earnings_calendar():
     """
@@ -35,7 +35,7 @@ def open_earnings_calendar():
 def click_importance(driver):
     """
     Clicks the Importance filter button
-    to filter out
+    and then click on "Today"
     """
     try:
         logging.info("Finding the High Importance button.")
@@ -54,10 +54,38 @@ def click_importance(driver):
     except Exception as e:
         logging.error(f"Failed to click Importance button: {e}")
 
-def scrape_economicss_data(driver):
+def day(driver, option):
     """
-    Extracts the Economic Event data 
-    from Trading View
+    Selects the date given the scraping
+    option: 'Tomorrow' or 'This Week'.
+    """
+    try:
+        logging.info(f"Clicking on '{option}' option.")
+
+        option_xpath = {
+            "Tomorrow": '//*[@id="Tomorrow"]/span[1]/span',
+            "This Week": '//*[@id="This week"]/span[1]/span'
+        }
+
+        if option not in option_xpath:
+            logging.error(f"Invalid option: {option}")
+            return
+
+        button = driver.find_element(By.XPATH, option_xpath[option])
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
+        
+        time.sleep(2)  
+        
+        driver.execute_script("arguments[0].click();", button)
+
+        logging.info(f"'{option}' button clicked successfully.")
+
+    except Exception as e:
+        logging.error(f"Failed to click '{option}' button: {e}")
+
+def scrape_economics_data(driver):
+    """
+    Extracts the Economic Event data from Trading View
     """
     logging.info("Waiting for the economic calendar to load.")
 
@@ -81,44 +109,15 @@ def scrape_economicss_data(driver):
         try:
             event_element = row.find_element(By.XPATH, ".//span[contains(@class, 'titleText')]")
             event_name = event_element.text.strip()
+
         except Exception as e:
             event_name = "N/A"
             logging.error(f"Error extracting event name in row {index + 1}: {e}")
 
         logging.info(f"Event: {event_name}")
 
-        try:
-            forecast_elements = row.find_elements(By.XPATH, ".//span[contains(@class, 'value')]")
-            forecast_value = forecast_elements[0].text.strip() if len(forecast_elements) > 0 else "N/A"
-            
-            prior_elements = row.find_elements(By.XPATH, "")
-            prior_value = forecast_elements[1].text.strip() if len(forecast_elements) > 1 else "N/A"
-
-            forecast_value = forecast_value.replace("%", "").strip()
-            prior_value = prior_value.replace("%", "").strip()
-
-        except Exception as e:
-            forecast_value = "N/A"
-            prior_value = "N/A"
-            logging.error(f"Error extracting forecast/prior in row {index + 1}: {e}")
-
-        logging.info(f"Forecast: {forecast_value} | Prior: {prior_value}")
-
-        try:
-            date_element = row.find_elements(By.XPATH, ".//span[contains(@class, 'economic-calendar-item-time')]")
-            event_date = date_element[0].text.strip() if date_element else "N/A"
-
-        except Exception as e:
-            event_date = "N/A"
-            logging.error(f"Error extracting date in row {index + 1}: {e}")
-
-        logging.info(f"Date: {event_date}")
-
         econ_data.append({
             "Event": event_name,
-            "Forecast": forecast_value,
-            "Prior": prior_value,
-            "Date": event_date
         })
 
     return econ_data
