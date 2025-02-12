@@ -118,3 +118,7 @@ def scrape_todays_earnings():
     except Exception as e:
         logging.error(f"Error scraping earnings: {e}.")
         return []
+    
+    finally:
+        driver.quit()
+        

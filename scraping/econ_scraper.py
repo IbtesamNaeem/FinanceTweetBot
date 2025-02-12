@@ -99,23 +99,16 @@ def scrape_economics_data(driver):
         logging.error("No economic calendar rows found.")
         return []
 
-    logging.info(f"Found {len(rows)} economic event rows.")
-
     econ_data = []
 
-    for index, row in enumerate(rows):
-        logging.info(f"Processing row {index + 1}...")
-
+    for row in rows:
         try:
             event_element = row.find_element(By.XPATH, ".//span[contains(@class, 'titleText')]")
             event_name = event_element.text.strip()
 
         except Exception as e:
             event_name = "N/A"
-            logging.error(f"Error extracting event name in row {index + 1}: {e}")
-
-        logging.info(f"Event: {event_name}")
-
+            
         econ_data.append({
             "Event": event_name,
         })

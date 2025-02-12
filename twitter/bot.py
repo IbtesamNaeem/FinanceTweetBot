@@ -6,14 +6,23 @@ import time
 import tweepy
 from dotenv import load_dotenv
 
-from twitter.tweet_format import (
-    daily_premkt_earnings_tweet, 
-    daily_afterhrs_earnings_tweet,
-    econ_reminder_tomorrow,
-    econ_reminder_weekly
-)
-from scraping.earnings_tradingview import scrape_todays_earnings  # Corrected import
+from scraping.earnings_tradingview import scrape_todays_earnings
 from scraping.econ_scraper import open_earnings_calendar, click_importance, day, scrape_economics_data
+from scraping.market_movers import open_premarket_page, premarket_data_scraper
+from twitter.tweet_format import (
+    daily_premkt_earnings_tweet,   
+    daily_afterhrs_earnings_tweet, 
+    econ_reminder_tomorrow,
+    econ_reminder_weekly,   
+    pre_market_gainer,
+    pre_market_losers,
+    week_high_52,
+    week_low_52,
+    all_time_high,
+    all_time_low,
+    pre_market_gap
+)
+
 from config.logger import setup_logging
 
 logging = setup_logging("TwitterBot")
@@ -99,11 +108,98 @@ def post_weekly_econ_tweet():
         driver.quit()
 
 
+def post_pre_market_gainers_tweet():
+    """
+    Fetches and posts the Pre-Market Gainers tweet.
+    """
+    driver = open_premarket_page("https://www.tradingview.com/markets/stocks-usa/market-movers-pre-market-gainers/")
+    
+    if driver:
+        gainers_data = premarket_data_scraper(driver)
+        pre_market_gainer(gainers_data)
+        driver.quit()
+
+def post_pre_market_losers_tweet():
+    """
+    Fetches and posts the Pre-Market Losers tweet.
+    """
+    driver = open_premarket_page("https://www.tradingview.com/markets/stocks-usa/market-movers-pre-market-losers/")
+    
+    if driver:
+        losers_data = premarket_data_scraper(driver)
+        pre_market_losers(losers_data)
+        driver.quit()
+
+def post_week_high_52_tweet():
+    """
+    Fetches and posts the 52-Week Highs tweet.
+    """
+    driver = open_premarket_page("https://www.tradingview.com/markets/stocks-usa/market-movers-52wk-high/")
+    
+    if driver:
+        high_52_data = premarket_data_scraper(driver)
+        week_high_52(high_52_data)
+        driver.quit()
+
+def post_week_low_52_tweet():
+    """
+    Fetches and posts the 52-Week Lows tweet.
+    """
+    driver = open_premarket_page("https://www.tradingview.com/markets/stocks-usa/market-movers-52wk-low/")
+    
+    if driver:
+        low_52_data = premarket_data_scraper(driver)
+        week_low_52(low_52_data)
+        driver.quit()
+
+def post_all_time_high_tweet():
+    """
+    Fetches and posts the All-Time Highs tweet.
+    """
+    driver = open_premarket_page("https://www.tradingview.com/markets/stocks-usa/market-movers-ath/")
+    
+    if driver:
+        all_time_high_data = premarket_data_scraper(driver)
+        all_time_high(all_time_high_data)
+        driver.quit()
+
+def post_all_time_low_tweet():
+    """
+    Fetches and posts the All-Time Lows tweet.
+    """
+    driver = open_premarket_page("https://www.tradingview.com/markets/stocks-usa/market-movers-atl/")
+    
+    if driver:
+        all_time_low_data = premarket_data_scraper(driver)
+        all_time_low(all_time_low_data)
+        driver.quit()
+
+def post_gap_tweet():
+    """
+    Fetches and posts the pre-market gapping tweet.
+    """
+    driver = open_premarket_page("https://www.tradingview.com/markets/stocks-usa/market-movers-pre-market-gappers/")
+    
+    if driver:
+        pre_market_gap_data = premarket_data_scraper(driver)
+        pre_market_gap(pre_market_gap_data)
+        driver.quit()
+
 if __name__ == "__main__":
-    print("\n🚀 Running Economic & Earnings Tweet Simulation...\n")
+    logging.info("\nRunning Market Movers Tweet Simulation...\n")
 
-    post_daily_econ_tweet()
-    post_weekly_econ_tweet()
+    post_pre_market_gainers_tweet()
+    post_pre_market_losers_tweet()
+    post_week_high_52_tweet()
+    post_week_low_52_tweet()
+    post_all_time_high_tweet()
+    post_all_time_low_tweet()
+    post_gap_tweet()
+    
+    logging.info("\nRunning Earnings & Economic Tweet Simulation...\n")
 
-    post_pre_market_earnings_tweet()
-    post_after_hours_earnings_tweet()
+    post_pre_market_earnings_tweet() 
+    post_after_hours_earnings_tweet()  
+
+    post_daily_econ_tweet()           
+    post_weekly_econ_tweet()          

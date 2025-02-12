@@ -1,5 +1,3 @@
-from scraping.econ_scraper import open_earnings_calendar, click_importance, day, scrape_economics_data
-
 def daily_premkt_earnings_tweet(earnings_list):
     """
     Formats the Pre-Market earnings reminder tweet.
@@ -60,3 +58,100 @@ def econ_reminder_weekly(econ_list):
 
     print(tweet)
 
+def pre_market_gainer(gainers_list):
+    """
+    Formats the Pre-Market Gainers tweet.
+    """
+    if not gainers_list:
+        return "No significant pre-market gainers today."
+
+    tweet = "Stocks rising in pre-market\n\n"
+
+    for stock in gainers_list[:5]:
+        tweet += f"- ${stock['Ticker']} +{stock['Pre-Market Change']}\n"
+
+    print(tweet)
+
+def pre_market_losers(losers_list):
+    """
+    Formats the Pre-Market Losers tweet.
+    """
+    if not losers_list:
+        return "No significant pre-market losers today."
+
+    tweet = "Stocks dropping in pre-market\n\n"
+
+    for stock in losers_list[:5]:
+        tweet += f"- ${stock['Ticker']} {stock['Pre-Market Change']}\n"
+
+    print(tweet)
+
+def week_high_52(high_list):
+    """
+    Formats the 52-Week Highs tweet.
+    """
+    if not high_list:
+        return "No stocks hitting new 52-week highs today."
+
+    tweet = "All these stocks hit a 52 WEEK HIGH at some point today\n\n"
+
+    for stock in high_list[:5]:
+        tweet += f"- ${stock['Ticker']}\n"
+
+    print(tweet)
+
+def week_low_52(low_list):
+    """
+    Formats the 52-Week Lows tweet.
+    """
+    if not low_list:
+        return "No stocks hitting new 52-week lows today."
+
+    tweet = "All these stocks hit a 52 WEEK LOW at some point today\n\n"
+
+    for stock in low_list[:5]:
+        tweet += f"- ${stock['Ticker']}\n"
+
+    print(tweet)
+
+def all_time_high(high_list):
+    """
+    Formats the All-Time Highs tweet.
+    """
+    if not high_list:
+        return "No stocks reaching all-time highs today."
+
+    tweet = "All these stocks hit ALL TIME HIGHS at some point today\n\n"
+
+    for stock in high_list[:5]:
+        tweet += f"- ${stock['Ticker']}\n"
+
+    print(tweet)
+
+def all_time_low(low_list):
+    """
+    Formats the All-Time Lows tweet.
+    """
+    if not low_list:
+        return "No stocks reaching all-time lows today."
+
+    tweet = "All these stocks hit ALL TIME LOWS at some point today\n\n"
+
+    for stock in low_list[:5]:
+        tweet += f"- ${stock['Ticker']}\n"
+     
+    print(tweet)
+
+def pre_market_gap(gap_list):
+    """
+    Fromats the pre-market Gap tweet
+    """
+    if not gap_list:
+        return "No stocks gapping today."
+    
+    tweet = "Stocks gapping up:"
+
+    for stock in gap_list[:5]:
+        tweet += f"- ${stock['Ticker']}"
+
+    print(tweet)
