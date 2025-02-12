@@ -1,7 +1,3 @@
-import os
-import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 import time
 import datetime
 from selenium import webdriver
@@ -61,7 +57,11 @@ def premarket_data_scraper(driver):
             logging.error(f"Error processing row: {e}")
 
     for stock in pre_market_data[:5]:
-        print(f"{stock['Ticker']} - {stock['Pre-Market Change']}")
+        
+        pre_market_data.append({
+            "Ticker": ticker,
+            "Percent Change": percent_change,
+        })
 
 if __name__ == "__main__":
     # Navigate to Pre-Market Gainers
