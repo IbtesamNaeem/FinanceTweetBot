@@ -12,7 +12,7 @@ def daily_premkt_earnings_tweet(earnings_list):
         tweet += f"  EPS estimate: {stock['EPS Estimate']}\n"
         tweet += f"  Revenue estimate: {stock['Revenue Forecast']}\n\n"
 
-    print(tweet)
+    return tweet.strip()
 
 def daily_afterhrs_earnings_tweet(earnings_list):
     """
@@ -28,7 +28,7 @@ def daily_afterhrs_earnings_tweet(earnings_list):
         tweet += f"  EPS estimate: {stock['EPS Estimate']}\n"
         tweet += f"  Revenue estimate: {stock['Revenue Forecast']}\n\n"
 
-    print(tweet)
+    return tweet.strip()
 
 def econ_reminder_tomorrow(econ_list):
     """
@@ -42,7 +42,7 @@ def econ_reminder_tomorrow(econ_list):
     for event in econ_list:
         tweet += f"- {event['Event']}\n"
 
-    print(tweet)
+    return tweet.strip()
 
 def econ_reminder_weekly(econ_list):
     """
@@ -56,7 +56,7 @@ def econ_reminder_weekly(econ_list):
     for event in econ_list:
         tweet += f"- {event['Event']}\n"
 
-    print(tweet)
+    return tweet.strip()
 
 def pre_market_gainer(gainers_list):
     """
@@ -70,7 +70,7 @@ def pre_market_gainer(gainers_list):
     for stock in gainers_list[:5]:
         tweet += f"- ${stock['Ticker']} +{stock['Pre-Market Change']}\n"
 
-    print(tweet)
+    return tweet.strip()
 
 def pre_market_losers(losers_list):
     """
@@ -84,7 +84,7 @@ def pre_market_losers(losers_list):
     for stock in losers_list[:5]:
         tweet += f"- ${stock['Ticker']} {stock['Pre-Market Change']}\n"
 
-    print(tweet)
+    return tweet.strip()
 
 def week_high_52(high_list):
     """
@@ -98,7 +98,7 @@ def week_high_52(high_list):
     for stock in high_list[:5]:
         tweet += f"- ${stock['Ticker']}\n"
 
-    print(tweet)
+    return tweet.strip()
 
 def week_low_52(low_list):
     """
@@ -112,7 +112,7 @@ def week_low_52(low_list):
     for stock in low_list[:5]:
         tweet += f"- ${stock['Ticker']}\n"
 
-    print(tweet)
+    return tweet.strip()
 
 def all_time_high(high_list):
     """
@@ -126,7 +126,7 @@ def all_time_high(high_list):
     for stock in high_list[:5]:
         tweet += f"- ${stock['Ticker']}\n"
 
-    print(tweet)
+    return tweet.strip()
 
 def all_time_low(low_list):
     """
@@ -140,7 +140,7 @@ def all_time_low(low_list):
     for stock in low_list[:5]:
         tweet += f"- ${stock['Ticker']}\n"
      
-    print(tweet)
+    return tweet.strip()
 
 def pre_market_gap(gap_list):
     """
@@ -154,4 +154,4 @@ def pre_market_gap(gap_list):
     for stock in gap_list[:5]:
         tweet += f"- ${stock['Ticker']}"
 
-    print(tweet)
+    return tweet.strip()

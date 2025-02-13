@@ -1,3 +1,7 @@
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import time
 import tweepy
 from dotenv import load_dotenv
@@ -184,13 +188,13 @@ def post_gap_tweet():
 if __name__ == "__main__":
     logging.info("\nRunning Market Movers Tweet Simulation...\n")
 
-    post_pre_market_gainers_tweet()
-    post_pre_market_losers_tweet()
-    post_week_high_52_tweet()
-    post_week_low_52_tweet()
-    post_all_time_high_tweet()
-    post_all_time_low_tweet()
-    post_gap_tweet()
+    # post_pre_market_gainers_tweet()
+    # post_pre_market_losers_tweet()
+    # post_week_high_52_tweet()
+    # post_week_low_52_tweet()
+    # post_all_time_high_tweet()
+    # post_all_time_low_tweet()
+    # post_gap_tweet()
     
     logging.info("\nRunning Earnings & Economic Tweet Simulation...\n")
 

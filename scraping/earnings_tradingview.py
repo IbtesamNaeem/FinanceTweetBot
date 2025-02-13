@@ -20,8 +20,8 @@ def earnings_to_be_tracked():
                     "SMCI", "SUPMERC", "UPST", "DASH", "LYFT", "FRSH", "FWKS", "ET", "GLD", "GILD", "CFLT"],
         "Wednesday": ["VRT", "CVS", "ABNB", "BMO", "JLL", "BIDU", "WDAY", "ADBE", "DUOL", "YETI",
                       "RBLX", "ROKU", "AFRM", "PINS", "CSCO", "MGM", "ASPN", "GEHC"],
-        "Thursday": ["DDOG", "COIN", "CYBR", "DE", "CROX", "DUK", "PGY", "SONY",
-                     "PG&E", "HWM", "HECLA", "RSG", "TWLO", "DKNG", "AMAT", "ABNB", "PANW", "WYN"],
+        "Thursday": ["DDOG", "CYBR", "DE", "CROX", "DUK", "PGY", "SONY", "PCG", "HWM", 
+                     "GEHC", "CON", "TWLO", "DKNG", "AMAT", "ABNB", "PANW", "ROKU", "WYNN", "HL", "RSG"],
         "Friday": ["MRNA", "ENB", "AXL", "AMC", "MGA", "POR", "FTS", "ACDVF", "SXT", "SXT", "ESNT"]
     }
 
@@ -121,4 +121,4 @@ def scrape_todays_earnings():
     
     finally:
         driver.quit()
-        
+
