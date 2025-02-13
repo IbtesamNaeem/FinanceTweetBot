@@ -48,19 +48,16 @@ def premarket_data_scraper(driver):
             ticker_full = ticker_element.text.strip()
             ticker = ticker_full.split("\n")[0]
 
-            percent_element = row.find_element(By.CSS_SELECTOR, "td:nth-child(2) span")
-            percent_change = percent_element.text.strip()
-            
-            pre_market_data.append({"Ticker": ticker, "Pre-Market Change": percent_change})
+            if len(ticker) > 1:
+                percent_element = row.find_element(By.CSS_SELECTOR, "td:nth-child(2) span")
+                percent_change = percent_element.text.strip()
+                
+                pre_market_data.append({
+                    "Ticker": ticker,
+                    "Pre-Market Change": percent_change,
+                })
 
         except Exception as e:
             logging.error(f"Error processing row: {e}")
-
-    for stock in pre_market_data[:5]:
-        
-        pre_market_data.append({
-            "Ticker": ticker,
-            "Percent Change": percent_change,
-        })
 
     return pre_market_data
