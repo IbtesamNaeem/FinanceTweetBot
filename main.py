@@ -232,6 +232,10 @@ def post_gap_tweet():
         send_tweet(tweet)
         driver.quit()
 
+def post_roaring_kitty_tweet():
+    """
+    Fetches and sends the roaring kitty tweet
+    """
 
 if __name__ == "__main__":
     logging.info("Starting Twitter Bot Scheduler...")

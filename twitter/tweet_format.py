@@ -155,3 +155,21 @@ def pre_market_gap(gap_list):
         tweet += f"- ${stock['Ticker']}"
 
     return tweet.strip()
+
+def kitty_posted(meme_list):
+    """
+    Formats a tweet when Roaring Kitty posts,
+    displaying meme stock movements.
+    """
+    if not meme_list:
+        return "No memes today"
+
+    tweet = "ROARING KITTY HAS RETURNED\n"
+    tweet += "MEME STOCKS ARE MOVINGGGGG\n\n"
+
+    for stock in meme_list:
+        tweet += f"${stock['ticker']} IS UP {stock['price_change']}% IN OVERNIGHT TRADING!!!\n"
+
+    tweet += "\nWHO HERE STILL GOT DIAMONDS HANDS???"
+
+    return tweet.strip()
