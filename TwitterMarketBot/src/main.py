@@ -5,8 +5,6 @@ import schedule
 import tweepy
 from dotenv import load_dotenv
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 from scraping.earnings_tradingview import scrape_todays_earnings
 from scraping.econ_scraper import (
     open_earnings_calendar,
@@ -240,7 +238,7 @@ def post_roaring_kitty_tweet():
 if __name__ == "__main__":
     logging.info("Starting Twitter Bot Scheduler...")
 
-    schedule.every().day.at("04:00").do(post_pre_market_earnings_tweet)
+    schedule.every().day.at("04:45").do(post_pre_market_earnings_tweet)
     schedule.every().day.at("12:00").do(post_after_hours_earnings_tweet)
     schedule.every().day.at("20:00").do(post_daily_econ_tweet)
     schedule.every().day.at("22:00").do(post_weekly_econ_tweet)
