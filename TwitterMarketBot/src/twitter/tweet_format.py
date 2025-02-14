@@ -67,8 +67,8 @@ def pre_market_gainer(gainers_list):
 
     tweet = "Stocks rising in pre-market\n\n"
 
-    for stock in gainers_list[:5]:
-        tweet += f"- ${stock['Ticker']} +{stock['Pre-Market Change']}\n"
+    for stock in gainers_list[:10]:
+        tweet += f"- {stock['Ticker']} last up +{stock['Pre-Market Change']}\n"
 
     return tweet.strip()
 
@@ -81,8 +81,8 @@ def pre_market_losers(losers_list):
 
     tweet = "Stocks dropping in pre-market\n\n"
 
-    for stock in losers_list[:5]:
-        tweet += f"- ${stock['Ticker']} {stock['Pre-Market Change']}\n"
+    for stock in losers_list[:10]:
+        tweet += f"- {stock['Ticker']} last down -{stock['Pre-Market Change']}\n"
 
     return tweet.strip()
 
@@ -95,8 +95,8 @@ def week_high_52(high_list):
 
     tweet = "All these stocks hit a 52 WEEK HIGH at some point today\n\n"
 
-    for stock in high_list[:5]:
-        tweet += f"- ${stock['Ticker']}\n"
+    for stock in high_list[:10]:
+        tweet += f"- {stock['Ticker']}\n"
 
     return tweet.strip()
 
@@ -109,8 +109,8 @@ def week_low_52(low_list):
 
     tweet = "All these stocks hit a 52 WEEK LOW at some point today\n\n"
 
-    for stock in low_list[:5]:
-        tweet += f"- ${stock['Ticker']}\n"
+    for stock in low_list[:10]:
+        tweet += f"- {stock['Ticker']}\n"
 
     return tweet.strip()
 
@@ -123,8 +123,8 @@ def all_time_high(high_list):
 
     tweet = "All these stocks hit ALL TIME HIGHS at some point today\n\n"
 
-    for stock in high_list[:5]:
-        tweet += f"- ${stock['Ticker']}\n"
+    for stock in high_list[:10]:
+        tweet += f"- {stock['Ticker']}\n"
 
     return tweet.strip()
 
@@ -137,8 +137,8 @@ def all_time_low(low_list):
 
     tweet = "All these stocks hit ALL TIME LOWS at some point today\n\n"
 
-    for stock in low_list[:5]:
-        tweet += f"- ${stock['Ticker']}\n"
+    for stock in low_list[:10]:
+        tweet += f"- {stock['Ticker']}\n"
      
     return tweet.strip()
 
@@ -151,8 +151,8 @@ def pre_market_gap(gap_list):
     
     tweet = "Stocks gapping up:"
 
-    for stock in gap_list[:5]:
-        tweet += f"- ${stock['Ticker']}"
+    for stock in gap_list[:10]:
+        tweet += f"- {stock['Ticker']} gapping up {stock['Pre-Market Change']}"
 
     return tweet.strip()
 
@@ -173,3 +173,4 @@ def kitty_posted(meme_list):
     tweet += "\nWHO HERE STILL GOT DIAMONDS HANDS???"
 
     return tweet.strip()
+

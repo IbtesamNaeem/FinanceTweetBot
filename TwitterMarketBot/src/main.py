@@ -1,5 +1,4 @@
 import os
-import sys
 import time
 import schedule
 import tweepy
@@ -45,7 +44,6 @@ client = tweepy.Client(
     access_token_secret=ACCESS_TOKEN_SECRET,
 )
 
-
 def send_tweet(tweet_text):
     """
     Helper function to send a tweet via the Twitter API.
@@ -58,7 +56,6 @@ def send_tweet(tweet_text):
             logging.error(f"Error sending tweet: {e}")
     else:
         logging.info("No tweet content to send.")
-
 
 def post_pre_market_earnings_tweet():
     """
@@ -75,7 +72,6 @@ def post_pre_market_earnings_tweet():
     else:
         logging.info("No Pre-Market earnings available.")
 
-
 def post_after_hours_earnings_tweet():
     """
     Fetches earnings data, formats the After-Hours tweet,
@@ -90,7 +86,6 @@ def post_after_hours_earnings_tweet():
         send_tweet(tweet)
     else:
         logging.info("No After-Hours earnings available.")
-
 
 def post_daily_econ_tweet():
     """
@@ -108,7 +103,6 @@ def post_daily_econ_tweet():
         send_tweet(tweet)
         driver.quit()
 
-
 def post_weekly_econ_tweet():
     """
     Fetches economic data for this week, formats the tweet,
@@ -125,7 +119,6 @@ def post_weekly_econ_tweet():
         send_tweet(tweet)
         driver.quit()
 
-
 def post_pre_market_gainers_tweet():
     """
     Fetches and sends the Pre-Market Gainers tweet.
@@ -139,7 +132,6 @@ def post_pre_market_gainers_tweet():
         tweet = pre_market_gainer(gainers_data)
         send_tweet(tweet)
         driver.quit()
-
 
 def post_pre_market_losers_tweet():
     """
@@ -155,7 +147,6 @@ def post_pre_market_losers_tweet():
         send_tweet(tweet)
         driver.quit()
 
-
 def post_week_high_52_tweet():
     """
     Fetches and sends the 52-Week Highs tweet.
@@ -169,7 +160,6 @@ def post_week_high_52_tweet():
         tweet = week_high_52(high_52_data)
         send_tweet(tweet)
         driver.quit()
-
 
 def post_week_low_52_tweet():
     """
@@ -185,7 +175,6 @@ def post_week_low_52_tweet():
         send_tweet(tweet)
         driver.quit()
 
-
 def post_all_time_high_tweet():
     """
     Fetches and sends the All-Time Highs tweet.
@@ -200,7 +189,6 @@ def post_all_time_high_tweet():
         send_tweet(tweet)
         driver.quit()
 
-
 def post_all_time_low_tweet():
     """
     Fetches and sends the All-Time Lows tweet.
@@ -214,7 +202,6 @@ def post_all_time_low_tweet():
         tweet = all_time_low(all_time_low_data)
         send_tweet(tweet)
         driver.quit()
-
 
 def post_gap_tweet():
     """
@@ -238,18 +225,19 @@ def post_roaring_kitty_tweet():
 if __name__ == "__main__":
     logging.info("Starting Twitter Bot Scheduler...")
 
-    schedule.every().day.at("04:45").do(post_pre_market_earnings_tweet)
-    schedule.every().day.at("12:00").do(post_after_hours_earnings_tweet)
-    schedule.every().day.at("20:00").do(post_daily_econ_tweet)
-    schedule.every().day.at("22:00").do(post_weekly_econ_tweet)
-    schedule.every().day.at("07:00").do(post_pre_market_gainers_tweet)
-    schedule.every().day.at("07:05").do(post_pre_market_losers_tweet)
-    schedule.every().day.at("15:45").do(post_week_high_52_tweet)
-    schedule.every().day.at("15:46").do(post_week_low_52_tweet)
-    schedule.every().day.at("15:50").do(post_all_time_high_tweet)
-    schedule.every().day.at("15:51").do(post_all_time_low_tweet)
-    schedule.every().day.at("08:00").do(post_gap_tweet)
+    schedule.every().day.at("04:45").do(post_pre_market_earnings_tweet)  # 4:45 AM
+    schedule.every().day.at("07:00").do(post_pre_market_gainers_tweet)   # 7:00 AM
+    schedule.every().day.at("07:05").do(post_pre_market_losers_tweet)    # 7:05 AM
+    schedule.every().day.at("08:00").do(post_gap_tweet)                  # 9:00 AM
+    schedule.every().day.at("12:00").do(post_after_hours_earnings_tweet) # 12:00 PM
+    schedule.every().day.at("15:45").do(post_week_high_52_tweet)         # 3:45 PM
+    schedule.every().day.at("15:46").do(post_week_low_52_tweet)          # 3:46 PM
+    schedule.every().day.at("15:50").do(post_all_time_high_tweet)        # 3:50 PM
+    schedule.every().day.at("15:51").do(post_all_time_low_tweet)         # 3:51 PM
+    schedule.every().day.at("23:00").do(post_daily_econ_tweet)           # 11:00 PM
+    schedule.every().day.at("22:00").do(post_weekly_econ_tweet)          # 10:00 PM
 
     while True:
         schedule.run_pending()
-        time.sleep(30) 
+        time.sleep(30)
+
